@@ -1,0 +1,5 @@
+{"instruction": "Explain what a neural network is.", "response": "A neural network is a computational model inspired by the human brain. It consists of layers of interconnected nodes that process information."}
+{"instruction": "What is gradient descent?", "response": "Gradient descent is an optimization algorithm used to minimize a function by iteratively moving in the direction of the steepest descent."}
+{"instruction": "Define machine learning.", "response": "Machine learning is a field of artificial intelligence that enables systems to learn patterns from data and improve performance without explicit programming."}
+{"instruction": "What is overfitting?", "response": "Overfitting occurs when a model learns the training data too well, including noise, and fails to generalize to new data."}
+{"instruction": "Explain backpropagation.", "response": "Backpropagation is an algorithm used to train neural networks by computing gradients of the loss function with respect to model parameters."}
