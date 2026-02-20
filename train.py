@@ -16,7 +16,7 @@ print("Using device:", device)
 tokenizer = AutoTokenizer.from_pretrained('gpt2')
 tokenizer.pad_token = tokenizer.eos_token
 
-dataset = InstructionDataset(r"data\data.jsonl",tokenizer)
+dataset = InstructionDataset(tokenizer,split ="train",limit = 10000)
 
 train_size = int(0.8 * len(dataset))
 val_size = len(dataset) - train_size

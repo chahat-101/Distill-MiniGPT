@@ -1,17 +1,30 @@
 import torch 
 from torch.utils.data import Dataset,DataLoader,random_split
+from datasets import load_dataset
 from transformers import AutoTokenizer
-from load_data import load_jsonl,format_example
+from load_data import load_jsonl
+
+def format_example(example):
+    return(
+        "### Instruction:\n"
+        f"{example['instruction']}\n\n"
+        "### Response:\n"
+        f"{example['output']}\n"
+    )
 
 
 class InstructionDataset(Dataset):
 
-    def __init__(self,file_path,tokenizer,max_length = 512):
+    def __init__(self,tokenizer,max_length = 512,split = "train",limit = 10000):
         self.tokenizer = tokenizer
-        self.max_length = 512
+        self.max_length = max_length
 
-        raw_data = load_jsonl(file_path)
-        self.texts = [format_example(ex) for ex in raw_data]
+        dataset = load_dataset("tatsu-lab/alpaca",split=split)
+
+        if limit:
+            dataset = dataset.select(range(limit))
+
+        self.texts = [format_example(ex) for ex in dataset]
 
     def __len__(self):
         return len(self.texts)
