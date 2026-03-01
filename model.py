@@ -8,10 +8,10 @@ class MiniGptConfig:
         self,
         vocab_size,
         max_position_embeddings = 512,
-        n_layers = 6,
-        n_heads = 6,
-        d_model = 384,
-        d_ff = 1536,
+        n_layers = 8,
+        n_heads = 8,
+        d_model = 512,
+        d_ff = 2048,
         dropout = 0.1,
     ):
         self.vocab_size = vocab_size
@@ -61,7 +61,7 @@ class MultiHeadSelfAttention(nn.Module):
 
         self.dropout = nn.Dropout(config.dropout)
 
-    def forward(self,x):
+    def forward(self,x, attention_mask=None):
         batch_size,seq_length,d_model = x.size()
         qkv = self.qkv_proj(x)
 
@@ -73,10 +73,21 @@ class MultiHeadSelfAttention(nn.Module):
         
         attn_score = (q @ k.transpose(-2,-1)/ math.sqrt(self.head_dim))
 
+        # Causal mask
         mask = torch.tril(torch.ones(seq_length,seq_length,device=x.device))
         mask = mask.unsqueeze(0).unsqueeze(0)
-
+        
+        # Apply causal mask
         attn_scores = attn_score.masked_fill(mask == 0, float("-inf"))
+
+        # Apply padding mask if provided
+        if attention_mask is not None:
+            # attention_mask shape: (batch, seq_length) -> (batch, 1, 1, seq_length)
+            expanded_mask = attention_mask.unsqueeze(1).unsqueeze(2)
+            # Mask where attention_mask is 0 (padding)
+            # We want to mask keys (last dim)
+            attn_scores = attn_scores.masked_fill(expanded_mask == 0, float("-inf"))
+
         attn_probs = torch.softmax(attn_scores,dim = -1)
         
         attn_probs = self.dropout(attn_probs)
@@ -120,9 +131,9 @@ class TransformerBlock(nn.Module):
         self.ln2 = nn.LayerNorm(config.d_model)
         self.ffn = FeedForward(config)
 
-    def forward(self,x):
+    def forward(self, x, attention_mask=None):
 
-        x = x + self.attention(self.ln1(x))
+        x = x + self.attention(self.ln1(x), attention_mask=attention_mask)
         x = x + self.ffn(self.ln2(x))
 
         return x
@@ -146,11 +157,11 @@ class MiniGpt(nn.Module):
 
         self.lm_head = nn.Linear(config.d_model,config.vocab_size,bias=False)
 
-    def forward(self,input_ids):
+    def forward(self, input_ids, attention_mask=None):
         x = self.embeddings(input_ids)
 
         for block in self.blocks:
-            x = block(x)
+            x = block(x, attention_mask=attention_mask)
         
         x = self.ln_f(x)
 
